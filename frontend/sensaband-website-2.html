@@ -230,6 +230,7 @@ input:checked + .slider:before { transform:translateX(20px); }
   <button class="nav-close" onclick="toggleNav()">✕</button>
   <a data-view="home">Home</a>
   <a data-view="dashboard">Dashboard</a>
+  <a data-view="scan">Backend Scan</a>
   <a data-view="worker-details">Worker Details</a>
   <a data-view="live">Live Monitoring</a>
   <a data-view="alerts">Alerts</a>
@@ -319,6 +320,44 @@ input:checked + .slider:before { transform:translateX(20px); }
     <div class="card"><h3>Real-Time Alerts</h3><p>Exposure, battery, sensor fault, device offline, and health alerts as they happen.</p></div>
     <div class="card"><h3>Enterprise Safety</h3><p>Dashboards, analytics, and reports across your whole workforce.</p></div>
   </section>
+</div>
+
+<!-- BACKEND SCAN -->
+<div id="view-scan" class="view">
+  <main class="page-wrap">
+    <div class="page-heading">
+      <p class="tag">FLASK API · LIVE</p>
+      <h1>Scan H₂S Strip</h1>
+      <p>Upload a strip image to the backend prediction service and save the result.</p>
+    </div>
+
+    <section class="dashboard-card" style="max-width:620px; margin:0 auto 20px;">
+      <form id="backendScanForm">
+        <label for="scanWorkerId">Worker ID</label>
+        <input type="text" id="scanWorkerId" value="SB-001" required>
+        <label for="scanWorkerName">Worker name</label>
+        <input type="text" id="scanWorkerName" value="R. Fernandes" required>
+        <label for="scanImage">Strip image</label>
+        <input type="file" id="scanImage" accept="image/*" required>
+        <button class="button full" type="submit" style="margin-top:20px;">Analyze Image</button>
+      </form>
+      <div id="backendScanMessage" class="empty-note" style="margin-top:16px;">Backend status: checking...</div>
+      <div id="backendScanResult" class="report-output hidden"></div>
+    </section>
+
+    <section class="dashboard-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <h2 style="margin:0;">Saved Backend Scans</h2>
+        <button class="mini-btn" type="button" onclick="loadBackendHistory()">Refresh</button>
+      </div>
+      <div class="table-container" style="margin-top:14px;">
+        <table>
+          <thead><tr><th>Time</th><th>Worker</th><th>Exposure</th><th>Status</th><th>Confidence</th></tr></thead>
+          <tbody id="backendHistoryTable"><tr><td colspan="5">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 </div>
 
 <!-- DASHBOARD (all workers, at a glance) -->
@@ -638,6 +677,7 @@ input:checked + .slider:before { transform:translateX(20px); }
 // ===============================================
 const users = [{ name: "Site Supervisor", username: "supervisor", password: "demo123", role: "Supervisor" }];
 let currentUser = null;
+const API_BASE = "http://127.0.0.1:5000";
 
 let thresholds = { warnPpm: 5, dangerPpm: 10, lowBattery: 20, maxHr: 120, minHr: 50, minSpo2: 92, maxTemp: 38.0 };
 let zones = ["Zone A — Intake", "Zone B — Treatment Tank 1", "Zone B — Treatment Tank 2", "Zone C — Sludge Processing", "Zone D — Outfall"];
@@ -684,6 +724,7 @@ function toggleNav() {
 document.querySelectorAll("nav [data-view]").forEach(el => {
   el.addEventListener("click", () => { showView(el.dataset.view); toggleNav(); });
 });
+document.getElementById("backendScanForm").addEventListener("submit", submitBackendScan);
 
 function showView(name) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
@@ -695,6 +736,7 @@ function showView(name) {
 
 function renderActiveView(name) {
   if (name === "home") renderHome();
+  if (name === "scan") { checkBackend(); loadBackendHistory(); }
   if (name === "dashboard") renderDashboard();
   if (name === "worker-details") renderWorkerDetailsList();
   if (name === "live") renderLive();
@@ -703,6 +745,58 @@ function renderActiveView(name) {
   if (name === "analytics") renderAnalytics();
   if (name === "settings") renderSettings();
   if (name === "profile") renderProfile();
+}
+
+async function checkBackend() {
+  const message = document.getElementById("backendScanMessage");
+  try {
+    const response = await fetch(API_BASE + "/");
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    message.textContent = "Backend status: online";
+    message.className = "empty-good";
+  } catch (error) {
+    message.textContent = "Backend status: unavailable. Start the Flask server on port 5000.";
+    message.className = "auth-error";
+  }
+}
+
+async function submitBackendScan(event) {
+  event.preventDefault();
+  const image = document.getElementById("scanImage").files[0];
+  const result = document.getElementById("backendScanResult");
+  if (!image) return;
+
+  const formData = new FormData();
+  formData.append("image", image);
+  formData.append("worker_id", document.getElementById("scanWorkerId").value.trim());
+  formData.append("worker_name", document.getElementById("scanWorkerName").value.trim());
+  result.classList.remove("hidden");
+  result.textContent = "Analyzing image...";
+
+  try {
+    const response = await fetch(API_BASE + "/api/h2s/scan", { method: "POST", body: formData });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.message || "Scan failed");
+    result.innerHTML = `<b>${data.status}</b> — ${data.exposure} ppm<br>Action: ${data.action}<br>Confidence: ${data.confidence}%`;
+    loadBackendHistory();
+  } catch (error) {
+    result.textContent = "Scan error: " + error.message;
+  }
+}
+
+async function loadBackendHistory() {
+  const table = document.getElementById("backendHistoryTable");
+  if (!table) return;
+  try {
+    const response = await fetch(API_BASE + "/api/h2s/history");
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const rows = await response.json();
+    table.innerHTML = rows.length ? rows.map(row => `
+      <tr><td>${row.scan_time}</td><td>${row.worker_name} (${row.worker_id})</td><td>${row.exposure} ppm</td><td>${row.status}</td><td>${row.confidence ?? "-"}%</td></tr>
+    `).join("") : '<tr><td colspan="5">No backend scans saved yet.</td></tr>';
+  } catch (error) {
+    table.innerHTML = `<tr><td colspan="5">Unable to load backend history: ${error.message}</td></tr>`;
+  }
 }
 
 // ===============================================

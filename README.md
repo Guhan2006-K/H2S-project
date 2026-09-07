@@ -12,9 +12,7 @@ fullstack-project/
 │   ├── app.py             # Flask API (/api/h2s/scan, /api/h2s/history)
 │   └── database.py        # SQLite storage
 ├── frontend/
-│   ├── index.html, scan.html, dashboard.html, history.html, about.html
-│   ├── css/style.css
-│   └── js/main.js, scan.js, dashboard.js
+│   └── sensaband-website-2.html # Connected demo frontend
 └── requirements.txt
 ```
 
@@ -25,17 +23,21 @@ fullstack-project/
    pip install -r requirements.txt
    ```
 
-2. Start the backend (from the `backend/` folder):
+2. Start the backend from the project root:
    ```
-   cd backend
-   python app.py
+   python -m backend.app
    ```
    This runs on `http://127.0.0.1:5000` and creates `database/h2s.db` and an
    `uploads/` folder automatically.
 
-3. Open the frontend: just open `frontend/index.html` in your browser
-   (or serve the `frontend/` folder with any static file server). The pages
-   call the API at `http://127.0.0.1:5000`, so keep the backend running.
+3. In a second terminal, serve the frontend from the project root:
+   ```
+   python -m http.server 8000 --directory frontend
+   ```
+
+4. Open `http://127.0.0.1:8000/sensaband-website-2.html` and log in with the
+   demo account `supervisor` / `demo123`. Use **Backend Scan** to upload an
+   image to the Flask API and view saved results. Keep both servers running.
 
 ## Deploying for real
 
@@ -48,9 +50,9 @@ in chat). Key things already set up for you:
 - `requirements.txt` includes `gunicorn` (production server) and
   `opencv-python-headless` (lighter, server-friendly build of OpenCV).
 
-After deploying the backend, update the frontend's `fetch()` URLs
-(`frontend/js/scan.js`, `frontend/js/dashboard.js`, `frontend/history.html`)
-from `http://127.0.0.1:5000` to your live backend URL, and tighten
+After deploying the backend, update the `API_BASE` value in
+`frontend/sensaband-website-2.html` from `http://127.0.0.1:5000` to your live
+backend URL, and tighten
 `CORS(app)` in `app.py` to your frontend's real domain once you have it.
 
 ## Note on the prediction model
