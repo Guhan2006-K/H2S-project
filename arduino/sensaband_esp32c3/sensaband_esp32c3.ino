@@ -4,7 +4,7 @@
 
 const char* WIFI_SSID = "YOUR_WIFI_NAME";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-const char* TELEMETRY_URL = "http://YOUR_COMPUTER_IP:5000/api/telemetry";
+const char* TELEMETRY_URL = "http://10.222.201.152:5000/api/telemetry";
 
 constexpr int MQ136_PIN = 2;
 constexpr int BATTERY_PIN = 3;

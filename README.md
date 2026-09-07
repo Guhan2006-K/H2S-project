@@ -45,8 +45,13 @@ fullstack-project/
 
 Open `arduino/sensaband_esp32c3/sensaband_esp32c3.ino` in Arduino IDE, select
 an ESP32-C3 board, and set `WIFI_SSID`, `WIFI_PASSWORD`, and
-`TELEMETRY_URL`. The URL must use the computer's LAN IP when the ESP32 is on
-the same Wi-Fi network, for example `http://192.168.1.20:5000/api/telemetry`.
+`TELEMETRY_URL`. This project is configured for the laptop LAN IP
+`10.222.201.152`:
+
+- Frontend: `http://10.222.201.152:8000/sensaband-website-2.html`
+- Backend telemetry: `http://10.222.201.152:5000/api/telemetry`
+
+The ESP32 and laptop must be connected to the same Wi-Fi network.
 
 The sketch reads MQ-136 on GPIO 2 and battery voltage on GPIO 3, then sends
 telemetry every five seconds. Read recent device readings at
