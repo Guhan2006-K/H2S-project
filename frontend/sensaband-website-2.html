@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SensaBand H₂S</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: Arial, Helvetica, sans-serif; background:#07100d; color:#e9fff2; min-height:100vh; }
+a { cursor:pointer; }
+button { font-family:inherit; }
+
+/* HEADER + NAV */
+header { min-height:65px; display:flex; align-items:center; justify-content:space-between; padding:14px 6%; border-bottom:1px solid #19352a; background:#091510; position:sticky; top:0; z-index:20; }
+header h2 { color:#7dff9b; letter-spacing:1px; }
+.hamburger { background:transparent; border:1px solid #365b47; color:#e9fff2; border-radius:8px; padding:8px 14px; cursor:pointer; font-size:16px; }
+.hamburger:hover { border-color:#7dff9b; }
+nav { position:fixed; top:0; right:0; width:270px; height:100vh; overflow-y:auto; background:#091510; border-left:1px solid #19352a; display:flex; flex-direction:column; padding:70px 12px 20px; gap:2px; transform:translateX(100%); transition:transform 0.25s; z-index:25; }
+nav.open { transform:translateX(0); }
+nav a { color:#b7cfc0; text-decoration:none; transition:0.2s; padding:13px 14px; border-radius:8px; font-size:15px; }
+nav a:hover, nav a.active { color:#7dff9b; font-weight:bold; background:#0d1b14; }
+.nav-divider { border-top:1px solid #19352a; margin:8px 4px; }
+.nav-overlay { display:none; position:fixed; inset:0; background:rgba(3,10,7,0.6); z-index:24; }
+.nav-overlay.open { display:block; }
+.nav-close { align-self:flex-end; background:transparent; border:1px solid #365b47; color:#e9fff2; border-radius:8px; padding:6px 12px; cursor:pointer; position:absolute; top:16px; right:16px; }
+
+/* VIEWS */
+.view { display:none; }
+.view.active { display:block; }
+.page-wrap { padding:60px 8% 100px; max-width:1100px; margin:0 auto; }
+
+/* HERO */
+.hero { min-height:520px; padding:70px 8% 40px; display:flex; align-items:center; justify-content:space-between; gap:60px; flex-wrap:wrap; }
+.hero section:first-child { max-width:720px; }
+.tag { color:#7dff9b; font-size:13px; font-weight:bold; letter-spacing:2px; margin-bottom:18px; }
+.hero h1 { font-size:clamp(30px,5.5vw,56px); line-height:1.1; margin-bottom:25px; }
+.description { color:#a8bdb1; font-size:17px; line-height:1.7; max-width:650px; }
+.buttons { display:flex; gap:15px; margin-top:30px; flex-wrap:wrap; }
+.button { display:inline-block; border:none; padding:14px 22px; border-radius:8px; background:#7dff9b; color:#06100a; font-weight:bold; text-decoration:none; cursor:pointer; transition:0.3s; font-size:15px; }
+.button:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(125,255,155,0.15); }
+.button.secondary { background:transparent; border:1px solid #365b47; color:#c9e5d2; }
+.button.full { width:100%; text-align:center; }
+.device { width:240px; height:360px; border:8px solid #20372b; border-radius:38px; padding:30px 16px; background:#0d1d15; box-shadow:0 0 60px rgba(125,255,155,0.08); }
+.device-screen { height:100%; border-radius:20px; background:#07110c; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:6px; }
+.device-screen small { color:#8fa99a; }
+.device-screen strong { font-size:42px; color:#f5c76a; }
+.device-screen span { color:#8fa99a; font-size:13px; }
+.warning { margin-top:10px; padding:6px 14px; border-radius:20px; background:#3c2911; color:#f5c76a; font-weight:bold; font-size:13px; }
+
+/* FEATURES */
+.features { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; padding:10px 8% 70px; max-width:1280px; margin:0 auto; }
+.card { background:#0d1b14; border:1px solid #19352a; border-radius:15px; padding:26px; }
+.card h3 { color:#7dff9b; margin-bottom:10px; font-size:17px; }
+.card p { color:#9fb4a7; line-height:1.6; font-size:14px; }
+
+/* HOME QUICK STATUS */
+.home-status { max-width:1280px; margin:0 auto; padding:0 8% 70px; }
+.home-status h3 { font-size:15px; color:#82988a; margin-bottom:16px; letter-spacing:1px; }
+
+/* PAGE HEADING */
+.page-heading { text-align:center; margin-bottom:36px; }
+.page-heading h1 { font-size:38px; margin-bottom:12px; }
+.page-heading p:last-child { color:#9fb4a7; }
+
+/* CARDS / FORMS */
+.dashboard-card, .about-card, .flow-card, .auth-card { background:#0d1b14; border:1px solid #19352a; border-radius:16px; padding:28px; }
+.dashboard-card h2 { margin-bottom:20px; font-size:19px; }
+label { display:block; margin:14px 0 7px; color:#a8c0b0; font-size:14px; }
+input[type="text"], input[type="password"], input[type="number"], input[type="email"], select {
+  width:100%; padding:12px; border:1px solid #294b3a; border-radius:7px; background:#07110c; color:white; outline:none; font-size:14px;
+}
+input:focus, select:focus { border-color:#7dff9b; }
+.hidden { display:none !important; }
+
+.status { display:inline-block; padding:6px 13px; border-radius:20px; font-weight:bold; font-size:13px; }
+.status.safe { color:#7dff9b; background:#102d1c; }
+.status.warning { color:#f5c76a; background:#34270e; }
+.status.danger { color:#ff6d6d; background:#351313; }
+
+.risk-badge { display:inline-block; padding:5px 12px; border-radius:20px; font-weight:bold; font-size:12px; }
+.risk-badge.low { color:#7dff9b; background:#102d1c; }
+.risk-badge.medium { color:#f5c76a; background:#34270e; }
+.risk-badge.high { color:#ff6d6d; background:#351313; }
+
+/* METRICS */
+.metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:22px; }
+.metric-card { background:#0d1b14; border:1px solid #19352a; border-radius:14px; padding:22px; }
+.metric-card span { display:block; color:#82988a; font-size:11.5px; margin-bottom:10px; }
+.metric-card strong { font-size:27px; color:#7dff9b; }
+
+/* TABLE */
+.table-container { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+th, td { text-align:left; padding:13px; border-bottom:1px solid #19352a; white-space:nowrap; font-size:14px; }
+th { color:#7dff9b; font-size:12.5px; }
+td { color:#b4c8ba; }
+
+/* ABOUT */
+.about-card, .flow-card { margin-bottom:22px; }
+.about-card h2, .flow-card h2 { margin-bottom:18px; font-size:19px; }
+.about-card p { color:#a6b9ad; line-height:1.8; margin-bottom:14px; font-size:14.5px; }
+.about-card li { margin:10px 0; color:#a6b9ad; font-size:14.5px; }
+.flow { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
+.flow div:not(.arrow) { padding:16px; border:1px solid #315441; border-radius:10px; text-align:center; }
+.flow strong, .flow span { display:block; }
+.flow strong { color:#7dff9b; margin-bottom:6px; }
+.flow span { color:#a6b9ad; font-size:13.5px; }
+.arrow { color:#7dff9b; font-size:20px; }
+.spec-table th { color:#82988a; font-weight:normal; width:40%; font-size:13px; }
+.spec-table td { color:#e9fff2; }
+
+/* NEEDS ATTENTION / ALERTS */
+.attention-section { border-color:#3c2911 !important; }
+.attention-list { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+.attention-row { display:flex; justify-content:space-between; align-items:center; gap:12px; background:#150e08; border:1px solid #3c2911; border-radius:10px; padding:14px 16px; flex-wrap:wrap; }
+.attention-row .a-info strong { display:block; font-size:14.5px; }
+.attention-row .a-info span { color:#c9b18f; font-size:13px; }
+.attention-row .a-actions { display:flex; gap:8px; }
+.mini-btn { border:1px solid #365b47; background:transparent; color:#c9e5d2; padding:7px 12px; border-radius:6px; font-size:12.5px; cursor:pointer; }
+.mini-btn:hover { border-color:#7dff9b; color:#7dff9b; }
+.mini-btn.resolve { border-color:#7dff9b; color:#7dff9b; }
+.mini-btn.acked { opacity:0.5; cursor:default; }
+.empty-good { color:#7dff9b; font-size:14px; padding:6px 0; }
+.empty-note { color:#708579; font-size:14px; padding:10px 0; }
+.filter-row { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.filter-row input, .filter-row select { flex:1; min-width:150px; }
+.tab-row { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+.tab-btn { border:1px solid #294b3a; background:transparent; color:#9fb4a7; padding:8px 16px; border-radius:20px; font-size:13px; cursor:pointer; }
+.tab-btn.active, .tab-btn:hover { border-color:#7dff9b; color:#7dff9b; }
+.log-status { font-size:11px; padding:3px 9px; border-radius:12px; font-weight:bold; }
+.log-status.active { background:#351313; color:#ff6d6d; }
+.log-status.acknowledged { background:#34270e; color:#f5c76a; }
+.log-status.resolved { background:#102d1c; color:#7dff9b; }
+
+/* WORKER CARDS / GRID */
+.guide-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.guide-item { text-align:left; background:#0d1b14; border:1px solid #19352a; border-radius:12px; padding:16px 18px; }
+.worker-card { cursor:pointer; transition:0.2s; }
+.worker-card:hover { border-color:#7dff9b; }
+.worker-meta { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+.pill-mini { font-size:10px; padding:2px 8px; border-radius:20px; border:1px solid #365b47; color:#9fb4a7; }
+.pill-mini.bad { border-color:#a23b1e; color:#ff9d84; }
+.pill-mini.low { border-color:#8a4b14; color:#f5c76a; }
+.trend { font-size:13px; margin-left:4px; }
+.trend.up { color:#ff9d84; }
+.trend.down { color:#7dff9b; }
+.trend.flat { color:#82988a; }
+
+/* WORKER DETAILS PAGE */
+.worker-list-row { display:flex; justify-content:space-between; align-items:center; padding:13px 16px; border-radius:10px; cursor:pointer; border:1px solid transparent; }
+.worker-list-row:hover, .worker-list-row.selected { background:#0d1b14; border-color:#294b3a; }
+.worker-list-row .wn { font-size:14.5px; }
+.worker-list-row .wid { color:#82988a; font-size:12.5px; }
+.detail-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:18px 0; }
+.detail-grid div { background:#07110c; border:1px solid #19352a; border-radius:10px; padding:14px; }
+.detail-grid div span { display:block; color:#82988a; font-size:11px; margin-bottom:5px; }
+.detail-grid div strong { font-size:16px; }
+
+/* ANALYTICS */
+.analytics-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.chart-card h4 { font-size:13px; color:#82988a; margin-bottom:10px; letter-spacing:0.5px; }
+
+/* DIGITAL READOUT (Live Monitoring) */
+.digital-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.digital-card { background:#07110c; border:1px solid #19352a; border-radius:14px; padding:22px 16px; text-align:center; }
+.digital-card .d-label { font-size:11.5px; color:#82988a; letter-spacing:0.5px; margin-bottom:10px; }
+.digital-card .d-value { font-family:'Courier New', monospace; font-size:44px; font-weight:bold; line-height:1; }
+.digital-card .d-unit { font-size:12px; color:#82988a; margin-top:8px; }
+.digital-card.ok .d-value { color:#7dff9b; }
+.digital-card.warn .d-value { color:#f5c76a; }
+.digital-card.bad .d-value { color:#ff6d6d; }
+
+/* SETTINGS */
+.settings-section { margin-bottom:22px; }
+.settings-section h2 { font-size:17px; margin-bottom:16px; }
+.threshold-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+.zone-row, .device-row { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid #19352a; font-size:14px; }
+.add-row { display:flex; gap:10px; margin-top:14px; }
+.add-row input { flex:1; }
+.remove-btn { color:#ff9d84; background:transparent; border:1px solid #a23b1e; border-radius:6px; padding:5px 10px; cursor:pointer; font-size:12px; }
+.toggle-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #19352a; }
+.toggle-row span { font-size:14px; color:#c9e5d2; }
+.switch { position:relative; width:44px; height:24px; }
+.switch input { opacity:0; width:0; height:0; }
+.slider { position:absolute; cursor:pointer; inset:0; background:#294b3a; border-radius:24px; transition:0.2s; }
+.slider:before { content:""; position:absolute; height:18px; width:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.2s; }
+input:checked + .slider { background:#7dff9b; }
+input:checked + .slider:before { transform:translateX(20px); }
+
+/* AUTH */
+.auth-wrap { min-height:90vh; display:flex; align-items:center; justify-content:center; padding:30px; }
+.auth-card { max-width:400px; width:100%; }
+.auth-card h1 { font-size:26px; margin-bottom:6px; }
+.auth-card .sub { color:#82988a; font-size:14px; margin-bottom:22px; }
+.auth-error { background:#351313; color:#ff9d84; padding:10px 14px; border-radius:8px; font-size:13.5px; margin-top:14px; }
+.auth-switch { text-align:center; margin-top:18px; color:#82988a; font-size:13.5px; }
+.demo-note { margin-top:20px; padding:12px 14px; border:1px solid #294b3a; border-radius:8px; color:#82988a; font-size:12.5px; }
+
+/* REPORTS */
+.report-output { background:#07110c; border:1px solid #294b3a; border-radius:10px; padding:20px; margin-top:18px; font-size:14px; line-height:2; }
+.report-output b { color:#7dff9b; }
+.report-actions { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+
+@media (max-width:850px) {
+  .hero { flex-direction:column; text-align:center; }
+  .features { grid-template-columns:1fr; }
+  .metrics { grid-template-columns:repeat(2,1fr); }
+  .guide-grid { grid-template-columns:1fr; }
+  .detail-grid { grid-template-columns:1fr; }
+  .analytics-grid { grid-template-columns:1fr; }
+  .threshold-grid { grid-template-columns:1fr; }
+}
+@media print {
+  header, nav, .nav-overlay, .report-actions { display:none !important; }
+  body { background:white; color:black; }
+  .report-output { border-color:#000; color:black; }
+  .report-output b { color:black; }
+}
+</style>
+</head>
+<body>
+
+<header id="appHeader" class="hidden">
+  <h2>SensaBand H₂S</h2>
+  <button class="hamburger" onclick="toggleNav()">☰ Menu</button>
+</header>
+
+<div id="navOverlay" class="nav-overlay" onclick="toggleNav()"></div>
+<nav id="mainNav">
+  <button class="nav-close" onclick="toggleNav()">✕</button>
+  <a data-view="home">Home</a>
+  <a data-view="dashboard">Dashboard</a>
+  <a data-view="worker-details">Worker Details</a>
+  <a data-view="live">Live Monitoring</a>
+  <a data-view="alerts">Alerts</a>
+  <a data-view="history">History</a>
+  <a data-view="analytics">Analytics</a>
+  <a data-view="reports">Reports</a>
+  <a data-view="settings">Settings</a>
+  <div class="nav-divider"></div>
+  <a data-view="about">About</a>
+  <a data-view="profile">Profile</a>
+  <a onclick="logout()" style="color:#ff9d84;">Log Out</a>
+</nav>
+
+<!-- LOGIN -->
+<div id="view-login" class="view active">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h1>Welcome back</h1>
+      <p class="sub">Log in to SensaBand H₂S</p>
+      <label for="loginUsername">Username</label>
+      <input type="text" id="loginUsername" placeholder="e.g. supervisor">
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••">
+      <button class="button full" style="margin-top:20px;" onclick="handleLogin()">Log In</button>
+      <div id="loginError" class="auth-error hidden"></div>
+      <p class="auth-switch">No account? <a onclick="showView('signup')" style="color:#7dff9b;">Sign Up</a></p>
+      <div class="demo-note">Demo login for this prototype — try username <b style="color:#c9e5d2;">supervisor</b> / password <b style="color:#c9e5d2;">demo123</b>, or sign up your own. Not real authentication (no server, no encryption) — don't use with real worker data.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SIGN UP -->
+<div id="view-signup" class="view">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h1>Create an account</h1>
+      <p class="sub">Set up supervisor access</p>
+      <label for="signupName">Full Name</label>
+      <input type="text" id="signupName" placeholder="Your name">
+      <label for="signupUsername">Username</label>
+      <input type="text" id="signupUsername" placeholder="Choose a username">
+      <label for="signupPassword">Password</label>
+      <input type="password" id="signupPassword" placeholder="Choose a password">
+      <label for="signupConfirm">Confirm Password</label>
+      <input type="password" id="signupConfirm" placeholder="Re-enter password">
+      <button class="button full" style="margin-top:20px;" onclick="handleSignup()">Create Account</button>
+      <div id="signupError" class="auth-error hidden"></div>
+      <p class="auth-switch">Already have an account? <a onclick="showView('login')" style="color:#7dff9b;">Log In</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="view-home" class="view">
+  <main class="hero">
+    <section>
+      <p class="tag">INDUSTRIAL SAFETY • AI • WEARABLE</p>
+      <h1>Live wearable monitoring for gas exposure and worker vitals.</h1>
+      <p class="description">SensaBand tracks H₂S exposure alongside heart rate, SpO2, and temperature from a wearable ESP32-C3 device — surfacing risk before it becomes an incident.</p>
+      <div class="buttons">
+        <a class="button" onclick="showView('dashboard')">Open Dashboard</a>
+        <a class="button secondary" onclick="showView('live')">Live Monitoring</a>
+      </div>
+    </section>
+    <section class="device">
+      <div class="device-screen">
+        <small>SYSTEM STATUS</small>
+        <strong id="homeHeroCount">--</strong>
+        <span>WORKERS ONLINE</span>
+        <div class="warning" id="homeHeroAlert">-- ACTIVE ALERTS</div>
+      </div>
+    </section>
+  </main>
+
+  <section class="home-status">
+    <h3>QUICK OVERVIEW</h3>
+    <div class="metrics">
+      <div class="metric-card"><span>TOTAL WORKERS</span><strong id="homeTotal">00</strong></div>
+      <div class="metric-card"><span>ONLINE NOW</span><strong id="homeOnline">00</strong></div>
+      <div class="metric-card"><span>ACTIVE ALERTS</span><strong id="homeAlerts">00</strong></div>
+      <div class="metric-card"><span>AVG RISK SCORE</span><strong id="homeRisk">0</strong></div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="card"><h3>Wearable Gas + Vitals Sensing</h3><p>MQ-136 for H₂S alongside heart rate, SpO2, and temperature on one wearable.</p></div>
+    <div class="card"><h3>Real-Time Alerts</h3><p>Exposure, battery, sensor fault, device offline, and health alerts as they happen.</p></div>
+    <div class="card"><h3>Enterprise Safety</h3><p>Dashboards, analytics, and reports across your whole workforce.</p></div>
+  </section>
+</div>
+
+<!-- DASHBOARD (all workers, at a glance) -->
+<div id="view-dashboard" class="view">
+  <main class="page-wrap">
+    <div class="page-heading">
+      <p class="tag">ALL WORKERS · LIVE</p>
+      <h1>Safety Dashboard</h1>
+      <p>Current status across every connected wearable.</p>
+    </div>
+
+    <section class="metrics">
+      <div class="metric-card"><span>ACTIVE WORKERS</span><strong id="dashWorkers">00</strong></div>
+      <div class="metric-card"><span>ACTIVE ALERTS</span><strong id="dashAlerts">00</strong></div>
+      <div class="metric-card"><span>AVERAGE EXPOSURE</span><strong id="dashAverage">0.0 ppm</strong></div>
+      <div class="metric-card"><span>COMPLIANCE</span><strong id="dashCompliance">100%</strong></div>
+    </section>
+
+    <section class="dashboard-card" style="margin-bottom:20px;">
+      <h2>Exposure Overview (fleet average)</h2>
+      <canvas id="dashChart" width="800" height="240"></canvas>
+    </section>
+
+    <section class="dashboard-card">
+      <h2>All Workers</h2>
+      <p style="color:#82988a; font-size:13px; margin:-12px 0 15px;">Click a worker for full detail.</p>
+      <div id="dashWorkerGrid" class="guide-grid"></div>
+    </section>
+  </main>
+</div>
+
+<!-- WORKER DETAILS -->
+<div id="view-worker-details" class="view">
+  <main class="page-wrap">
+    <div class="page-heading">
+      <p class="tag">INDIVIDUAL RECORD</p>
+      <h1>Worker Details</h1>
+      <p>Complete sensor, device, vitals, and safety information for one worker.</p>
+    </div>
+
+    <section class="dashboard-card" style="margin-bottom:20px;">
+      <input type="text" id="workerDetailsSearch" placeholder="Search by name or ID...">
+      <div id="workerDetailsList" style="margin-top:14px; display:flex; flex-direction:column; gap:2px;"></div>
+    </section>
+
+    <section class="dashboard-card" id="workerDetailPanel"></section>
+  </main>
+</div>
+
+<!-- LIVE MONITORING (single device / breadboard feed) -->
+<div id="view-live" class="view">
+  <main class="page-wrap">
+    <div class="page-heading">
+      <p class="tag">RAW DEVICE TELEMETRY</p>
+      <h1>Live Monitoring</h1>
+      <p>Real-time stream from a single wearable's ESP32-C3 and onboard sensors.</p>
+    </div>
+
+    <section class="dashboard-card" style="margin-bottom:20px;">
+      <label for="liveDeviceSelect">Select device</label>
+      <select id="liveDeviceSelect"></select>
+      <p id="liveDeviceMeta" style="color:#82988a; font-size:13px; margin-top:12px;"></p>
+    </section>
+
+    <section class="dashboard-card digital-grid" style="margin-bottom:20px;" id="liveDigitalGrid">
+      <div class="digital-card ok" id="digitalPpm"><div class="d-label">H₂S EXPOSURE</div><div class="d-value">--</div><div class="d-unit">ppm</div></div>
+      <div class="digital-card ok" id="digitalHr"><div class="d-label">HEART RATE</div><div class="d-value">--</div><div class="d-unit">bpm</div></div>
+      <div class="digital-card ok" id="digitalSpo2"><div class="d-label">SPO2</div><div class="d-value">--</div><div class="d-unit">%</div></div>
+      <div class="digital-card ok" id="digitalTemp"><div class="d-label">TEMPERATURE</div><div class="d-value">--</div><div class="d-unit">°C</div></div>
+    </section>
+
+    <section class="dashboard-card">
+      <h2>Raw Readout</h2>
+      <div class="detail-grid" id="liveRawReadout"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ALERTS -->
+<div id="view-alerts" class="view">
+  <main class="page-wrap">
+    <div class="page-heading">
+      <p class="tag">ACTIVE + PAST</p>
+      <h1>Alerts</h1>
+      <p>H₂S, low battery, sensor fault, device offline, and health alerts.</p>
+    </div>
+
+    <section class="dashboard-card attention-section">
+      <div class="tab-row">
+        <button class="tab-btn active" data-tab="ACTIVE" onclick="setAlertTab('ACTIVE')">Active</button>
+        <button class="tab-btn" data-tab="ACKNOWLEDGED" onclick="setAlertTab('ACKNOWLEDGED')">Acknowledged</button>
+        <button class="tab-btn" data-tab="RESOLVED" onclick="setAlertTab('RESOLVED')">Resolved</button>
+        <button class="tab-btn" data-tab="ALL" onclick="setAlertTab('ALL')">All</button>
+      </div>
+      <div id="alertsList" class="attention-list"></div>
+    </section>
+  </main>
+</div>
+
+<!-- HISTORY -->
+<div id="view-history" class="view">
+  <main class="page-wrap">
+    <div class="page-heading">
+      <p class="tag">RECORDS</p>
+      <h1>History</h1>
+      <p>Previous sensor readings and alert records.</p>
+    </div>
+
+    <section class="dashboard-card" style="margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <h2 style="margin:0;">Sensor Readings Log</h2>
+        <button class="mini-btn" onclick="exportReadingsCsv()">Export CSV</button>
+      </div>
+      <div class="table-container" style="margin-top:14px;">
+        <table>
+          <thead><tr><th>Time</th><th>Worker</th><th>Exposure</th><th>Heart Rate</th><th>SpO2</th><th>Temp</th><th>Status</th></tr></thead>
+          <tbody id="readingsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="dashboard-card">
+      <h2>Alert Log</h2>
+      <div class="table-container">
+        <table>
+          <thead><tr><th>Worker</th><th>Type</th><th>Created</th><th>Acknowledged</th><th>Resolved</th><th>Status</th></tr></thead>
+          <tbody id="alertLogTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ANALYTICS -->
+<div id="view-analytics" class="view">
+  <main class="page-wrap">
+    <div class="page-heading">
+      <p class="tag">TRENDS</p>
+      <h1>Analytics</h1>
+      <p>H₂S, heart rate, SpO2, temperature, battery, and risk over time.</p>
+    </div>
+
+    <section class="dashboard-card" style="margin-bottom:20px;">
+      <label for="analyticsWorkerSelect">Worker</label>
+      <select id="analyticsWorkerSelect"></select>
+      <div style="margin-top:16px; display:flex; align-items:center; gap:14px;">
+        <span style="color:#82988a; font-size:13px;">CURRENT RISK</span>
+        <span id="analyticsRiskBadge" class="risk-badge low">LOW · 0</span>
+      </div>
+    </section>
+
+    <section class="analytics-grid">
+      <div class="dashboard-card chart-card"><h4>H₂S EXPOSURE (PPM)</h4><canvas id="chartPpm" width="380" height="160"></canvas></div>
+      <div class="dashboard-card chart-card"><h4>HEART RATE (BPM)</h4><canvas id="chartHr" width="380" height="160"></canvas></div>
+      <div class="dashboard-card chart-card"><h4>SPO2 (%)</h4><canvas id="chartSpo2" width="380" height="160"></canvas></div>
+      <div class="dashboard-card chart-card"><h4>TEMPERATURE (°C)</h4><canvas id="chartTemp" width="380" height="160"></canvas></div>
+      <div class="dashboard-card chart-card"><h4>BATTERY (%)</h4><canvas id="chartBattery" width="380" height="160"></canvas></div>
+      <div class="dashboard-card chart-card"><h4>RISK SCORE</h4><canvas id="chartRisk" width="380" height="160"></canvas></div>
+    </section>
+  </main>
+</div>
+
+<!-- REPORTS -->
+<div id="view-reports" class="view">
+  <main class="page-wrap">
+    <div class="page-heading">
+      <p class="tag">SUMMARIES</p>
+      <h1>Reports</h1>
+      <p>Generate a summary for the current data and export it.</p>
+    </div>
+
+    <section class="dashboard-card">
+      <label for="reportPeriod">Report period</label>
+      <select id="reportPeriod">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
+      <button class="button" style="margin-top:16px;" onclick="generateReport()">Generate Report</button>
+
+      <div id="reportOutput" class="report-output hidden"></div>
+      <div id="reportActions" class="report-actions hidden">
+        <button class="mini-btn" onclick="exportReportCsv()">Export CSV</button>
+        <button class="mini-btn" onclick="window.print()">Print / Save as PDF</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- SETTINGS -->
+<div id="view-settings" class="view">
+  <main class="page-wrap">
+    <div class="page-heading">
+      <p class="tag">CONFIGURATION</p>
+      <h1>Settings</h1>
+      <p>Workers, zones, thresholds, devices, and notifications.</p>
+    </div>
+
+    <section class="dashboard-card settings-section">
+      <h2>Alert Thresholds</h2>
+      <div class="threshold-grid">
+        <div><label>Warning exposure (ppm)</label><input type="number" id="thWarnPpm" step="0.1"></div>
+        <div><label>Danger exposure (ppm)</label><input type="number" id="thDangerPpm" step="0.1"></div>
+        <div><label>Low battery (%)</label><input type="number" id="thBattery"></div>
+        <div><label>Max heart rate (bpm)</label><input type="number" id="thMaxHr"></div>
+        <div><label>Min heart rate (bpm)</label><input type="number" id="thMinHr"></div>
+        <div><label>Min SpO2 (%)</label><input type="number" id="thMinSpo2"></div>
+        <div><label>Max temperature (°C)</label><input type="number" id="thMaxTemp" step="0.1"></div>
+      </div>
+      <button class="button" style="margin-top:16px;" onclick="saveThresholds()">Save Thresholds</button>
+    </section>
+
+    <section class="dashboard-card settings-section">
+      <h2>Zones</h2>
+      <div id="zoneList"></div>
+      <div class="add-row"><input type="text" id="newZoneInput" placeholder="New zone name"><button class="mini-btn" onclick="addZone()">Add</button></div>
+    </section>
+
+    <section class="dashboard-card settings-section">
+      <h2>Workers</h2>
+      <div id="workerManageList"></div>
+      <div class="add-row">
+        <input type="text" id="newWorkerId" placeholder="Worker ID (e.g. SB-007)">
+        <input type="text" id="newWorkerName" placeholder="Name">
+        <button class="mini-btn" onclick="addWorker()">Add</button>
+      </div>
+    </section>
+
+    <section class="dashboard-card settings-section">
+      <h2>Devices</h2>
+      <div id="deviceList"></div>
+    </section>
+
+    <section class="dashboard-card settings-section">
+      <h2>Notifications</h2>
+      <div class="toggle-row"><span>Email notifications</span><label class="switch"><input type="checkbox" id="notifyEmail" checked onchange="saveNotifyPrefs()"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span>SMS notifications</span><label class="switch"><input type="checkbox" id="notifySms" onchange="saveNotifyPrefs()"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span>Notify on DANGER exposure</span><label class="switch"><input type="checkbox" id="notifyDanger" checked onchange="saveNotifyPrefs()"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span>Notify on WARNING exposure</span><label class="switch"><input type="checkbox" id="notifyWarning" onchange="saveNotifyPrefs()"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span>Notify on low battery</span><label class="switch"><input type="checkbox" id="notifyBattery" checked onchange="saveNotifyPrefs()"><span class="slider"></span></label></div>
+      <div class="toggle-row"><span>Notify on sensor/device fault</span><label class="switch"><input type="checkbox" id="notifyFault" checked onchange="saveNotifyPrefs()"><span class="slider"></span></label></div>
+      <p style="color:#82988a; font-size:12.5px; margin-top:14px;">Demo only — these toggles gate the simulated log below, no real email/SMS is sent.</p>
+      <h2 style="margin-top:22px;">Recent Notifications</h2>
+      <div id="notificationsLogList"></div>
+    </section>
+  </main>
+</div>
+
+<!-- PROFILE -->
+<div id="view-profile" class="view">
+  <main class="page-wrap" style="max-width:500px;">
+    <div class="page-heading">
+      <p class="tag">ACCOUNT</p>
+      <h1>Profile</h1>
+    </div>
+    <section class="dashboard-card" style="margin-bottom:20px;">
+      <div class="detail-grid" style="grid-template-columns:1fr 1fr;">
+        <div><span>NAME</span><strong id="profileName">—</strong></div>
+        <div><span>USERNAME</span><strong id="profileUsername">—</strong></div>
+        <div><span>ROLE</span><strong id="profileRole">—</strong></div>
+      </div>
+    </section>
+    <section class="dashboard-card">
+      <h2>Change Password</h2>
+      <label>Current Password</label><input type="password" id="currentPassword">
+      <label>New Password</label><input type="password" id="newPassword">
+      <label>Confirm New Password</label><input type="password" id="confirmNewPassword">
+      <button class="button full" style="margin-top:18px;" onclick="changePassword()">Update Password</button>
+      <div id="passwordMsg" class="auth-error hidden"></div>
+    </section>
+    <button class="button secondary full" style="margin-top:20px;" onclick="logout()">Log Out</button>
+  </main>
+</div>
+
+<!-- ABOUT -->
+<div id="view-about" class="view">
+  <main class="page-wrap">
+    <div class="page-heading">
+      <p class="tag">ABOUT THE PROJECT</p>
+      <h1>SensaBand H₂S</h1>
+      <p>Wearable H₂S and vitals monitoring with AI-based risk estimation</p>
+    </div>
+    <section class="about-card">
+      <h2>What is SensaBand H₂S?</h2>
+      <p>SensaBand is a wearable industrial safety device built on an ESP32-C3, combining an MQ-136 hydrogen sulfide sensor with vitals sensing (heart rate, SpO2, temperature).</p>
+      <p>Readings stream in real time to a safety dashboard, where thresholds trigger alerts for supervisors to acknowledge and resolve.</p>
+    </section>
+    <section class="flow-card">
+      <h2>System Flow</h2>
+      <div class="flow">
+        <div><strong>01</strong><span>Wearable Sensors</span></div>
+        <div class="arrow">→</div>
+        <div><strong>02</strong><span>ESP32-C3</span></div>
+        <div class="arrow">→</div>
+        <div><strong>03</strong><span>Live Dashboard</span></div>
+        <div class="arrow">→</div>
+        <div><strong>04</strong><span>Alerts + Reports</span></div>
+      </div>
+    </section>
+    <section class="about-card">
+      <h2>Technical Specifications</h2>
+      <table class="spec-table">
+        <tr><th>Gas sensor</th><td>MQ-136 (H₂S)</td></tr>
+        <tr><th>Vitals sensors</th><td>Heart rate, SpO2, temperature</td></tr>
+        <tr><th>Controller</th><td>ESP32-C3</td></tr>
+        <tr><th>Safe threshold</th><td>Below 5 ppm</td></tr>
+        <tr><th>Warning threshold</th><td>5–10 ppm</td></tr>
+        <tr><th>Danger threshold</th><td>Above 10 ppm</td></tr>
+      </table>
+    </section>
+  </main>
+</div>
+
+<script>
+// ===============================================
+// GLOBAL STATE
+// ===============================================
+const users = [{ name: "Site Supervisor", username: "supervisor", password: "demo123", role: "Supervisor" }];
+let currentUser = null;
+
+let thresholds = { warnPpm: 5, dangerPpm: 10, lowBattery: 20, maxHr: 120, minHr: 50, minSpo2: 92, maxTemp: 38.0 };
+let zones = ["Zone A — Intake", "Zone B — Treatment Tank 1", "Zone B — Treatment Tank 2", "Zone C — Sludge Processing", "Zone D — Outfall"];
+let notifyPrefs = { email: true, sms: false, onDanger: true, onWarning: false, onBattery: true, onFault: true };
+let notificationsLog = [];
+
+const liveWorkers = [
+  mkWorker("SB-001", "R. Fernandes", "Zone A — Intake", 2, 78, "CONNECTED"),
+  mkWorker("SB-002", "A. Sharma", "Zone B — Treatment Tank 2", 6, 34, "CONNECTED"),
+  mkWorker("SB-003", "K. Menon", "Zone A — Intake", 1, 91, "CONNECTED"),
+  mkWorker("SB-004", "T. Iyer", "Zone C — Sludge Processing", 9, 16, "CONNECTED"),
+  mkWorker("SB-005", "S. Nair", "Zone B — Treatment Tank 1", 3, 62, "FAULT"),
+  mkWorker("SB-006", "D. Pillai", "Zone D — Outfall", 0.5, 45, "DISCONNECTED")
+];
+
+function mkWorker(id, name, zone, base, battery, sensorStatus) {
+  return {
+    worker_id: id, worker_name: name, zone, base, battery,
+    deviceStatus: sensorStatus === "DISCONNECTED" ? "OFFLINE" : "ONLINE",
+    sensorStatus, prev: null, current: base, status: "SAFE", trend: "flat",
+    heartRate: 75, spo2: 98, temperature: 36.6, riskScore: 5,
+    lastSync: null,
+    history: { ppm: [], hr: [], spo2: [], temp: [], battery: [], risk: [] }
+  };
+}
+
+const fleetHistory = [];
+const readingsLog = [];
+const alertLog = [];
+let alertIdCounter = 1;
+let readingTickCount = 0;
+let selectedWorkerId = liveWorkers[0].worker_id;
+let alertTab = "ACTIVE";
+let masterInterval = null;
+
+// ===============================================
+// NAV / VIEW SWITCHING
+// ===============================================
+function toggleNav() {
+  document.getElementById("mainNav").classList.toggle("open");
+  document.getElementById("navOverlay").classList.toggle("open");
+}
+
+document.querySelectorAll("nav [data-view]").forEach(el => {
+  el.addEventListener("click", () => { showView(el.dataset.view); toggleNav(); });
+});
+
+function showView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-" + name).classList.add("active");
+  document.querySelectorAll("nav [data-view]").forEach(a => a.classList.toggle("active", a.dataset.view === name));
+  window.scrollTo(0, 0);
+  renderActiveView(name);
+}
+
+function renderActiveView(name) {
+  if (name === "home") renderHome();
+  if (name === "dashboard") renderDashboard();
+  if (name === "worker-details") renderWorkerDetailsList();
+  if (name === "live") renderLive();
+  if (name === "alerts") renderAlertsPage();
+  if (name === "history") { renderReadingsTable(); renderAlertLogTable(); }
+  if (name === "analytics") renderAnalytics();
+  if (name === "settings") renderSettings();
+  if (name === "profile") renderProfile();
+}
+
+// ===============================================
+// AUTH
+// ===============================================
+function showAuthError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.remove("hidden");
+}
+
+function handleLogin() {
+  const username = document.getElementById("loginUsername").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  document.getElementById("loginError").classList.add("hidden");
+
+  const user = users.find(u => u.username === username && u.password === password);
+  if (!user) { showAuthError("loginError", "Incorrect username or password."); return; }
+
+  currentUser = user;
+  document.getElementById("appHeader").classList.remove("hidden");
+  startMasterLoop();
+  showView("home");
+}
+
+function handleSignup() {
+  const name = document.getElementById("signupName").value.trim();
+  const username = document.getElementById("signupUsername").value.trim();
+  const password = document.getElementById("signupPassword").value;
+  const confirm = document.getElementById("signupConfirm").value;
+  document.getElementById("signupError").classList.add("hidden");
+
+  if (!name || !username || !password) { showAuthError("signupError", "Please fill in all fields."); return; }
+  if (password !== confirm) { showAuthError("signupError", "Passwords do not match."); return; }
+  if (users.find(u => u.username === username)) { showAuthError("signupError", "That username is already taken."); return; }
+
+  const newUser = { name, username, password, role: "Supervisor" };
+  users.push(newUser);
+  currentUser = newUser;
+  document.getElementById("appHeader").classList.remove("hidden");
+  startMasterLoop();
+  showView("home");
+}
+
+function logout() {
+  currentUser = null;
+  if (masterInterval) { clearInterval(masterInterval); masterInterval = null; }
+  document.getElementById("appHeader").classList.add("hidden");
+  document.getElementById("mainNav").classList.remove("open");
+  document.getElementById("navOverlay").classList.remove("open");
+  document.getElementById("loginUsername").value = "";
+  document.getElementById("loginPassword").value = "";
+  showView("login");
+}
+
+function changePassword() {
+  const cur = document.getElementById("currentPassword").value;
+  const next = document.getElementById("newPassword").value;
+  const confirm = document.getElementById("confirmNewPassword").value;
+  const msg = document.getElementById("passwordMsg");
+  msg.classList.remove("hidden");
+
+  if (cur !== currentUser.password) { msg.textContent = "Current password is incorrect."; return; }
+  if (!next || next !== confirm) { msg.textContent = "New passwords do not match."; return; }
+
+  currentUser.password = next;
+  msg.textContent = "Password updated.";
+  document.getElementById("currentPassword").value = "";
+  document.getElementById("newPassword").value = "";
+  document.getElementById("confirmNewPassword").value = "";
+}
+
+function renderProfile() {
+  document.getElementById("profileName").textContent = currentUser.name;
+  document.getElementById("profileUsername").textContent = currentUser.username;
+  document.getElementById("profileRole").textContent = currentUser.role;
+}
+
+// ===============================================
+// SIMULATION TICK
+// ===============================================
+function statusFor(exposure) {
+  if (exposure < thresholds.warnPpm) return "SAFE";
+  if (exposure < thresholds.dangerPpm) return "WARNING";
+  return "DANGER";
+}
+
+function riskFor(w) {
+  let score = 5;
+  if (w.status === "DANGER") score += 40; else if (w.status === "WARNING") score += 20;
+  if (w.heartRate > thresholds.maxHr || w.heartRate < thresholds.minHr) score += 20;
+  if (w.spo2 < thresholds.minSpo2) score += 20;
+  if (w.temperature > thresholds.maxTemp) score += 20;
+  if (w.battery < thresholds.lowBattery) score += 10;
+  return Math.min(100, score);
+}
+
+function riskLevel(score) {
+  if (score >= 60) return "HIGH";
+  if (score >= 30) return "MEDIUM";
+  return "LOW";
+}
+
+function pushHistory(arr, value) {
+  arr.push(value);
+  if (arr.length > 24) arr.shift();
+}
+
+function raiseAlert(worker, type, message, severity) {
+  const existing = alertLog.find(a => a.worker_id === worker.worker_id && a.type === type && a.status !== "RESOLVED");
+  if (existing) return;
+  const alert = {
+    id: alertIdCounter++, worker_id: worker.worker_id, worker_name: worker.worker_name,
+    type, message, created: new Date(), acknowledgedAt: null, resolvedAt: null, status: "ACTIVE"
+  };
+  alertLog.unshift(alert);
+  maybeNotify(alert, severity);
+}
+
+function autoResolve(worker, type) {
+  const existing = alertLog.find(a => a.worker_id === worker.worker_id && a.type === type && a.status !== "RESOLVED");
+  if (existing) { existing.status = "RESOLVED"; existing.resolvedAt = new Date(); }
+}
+
+function maybeNotify(alert, severity) {
+  let shouldNotify = false;
+  if (severity === "DANGER" && notifyPrefs.onDanger) shouldNotify = true;
+  if (severity === "WARNING" && notifyPrefs.onWarning) shouldNotify = true;
+  if (severity === "BATTERY" && notifyPrefs.onBattery) shouldNotify = true;
+  if (severity === "FAULT" && notifyPrefs.onFault) shouldNotify = true;
+  if (!shouldNotify) return;
+
+  const channels = [];
+  if (notifyPrefs.email) channels.push("Email");
+  if (notifyPrefs.sms) channels.push("SMS");
+  if (channels.length === 0) return;
+
+  notificationsLog.unshift({ time: new Date(), message: alert.message, worker: alert.worker_name, channels: channels.join(" + ") });
+  if (notificationsLog.length > 30) notificationsLog.pop();
+}
+
+function acknowledgeAlert(id) {
+  const a = alertLog.find(a => a.id === id);
+  if (a && a.status === "ACTIVE") { a.status = "ACKNOWLEDGED"; a.acknowledgedAt = new Date(); }
+  renderAlertsPage();
+}
+function resolveAlert(id) {
+  const a = alertLog.find(a => a.id === id);
+  if (a && a.status !== "RESOLVED") { a.status = "RESOLVED"; a.resolvedAt = new Date(); }
+  renderAlertsPage();
+}
+
+function tickSimulation() {
+  readingTickCount++;
+  liveWorkers.forEach(w => {
+    if (Math.random() < 0.025) w.deviceStatus = w.deviceStatus === "ONLINE" ? "OFFLINE" : "ONLINE";
+    if (w.deviceStatus === "ONLINE" && Math.random() < 0.025) {
+      w.sensorStatus = w.sensorStatus === "CONNECTED" ? (Math.random() < 0.4 ? "FAULT" : "CONNECTED") : "CONNECTED";
+    }
+    if (w.deviceStatus === "OFFLINE") w.sensorStatus = "DISCONNECTED";
+
+    if (w.deviceStatus === "ONLINE" && w.sensorStatus === "CONNECTED") {
+      w.prev = w.current;
+      w.current = Math.max(0, Math.round((w.base + (Math.random() - 0.5) * 1.6 + Math.random() * 0.8) * 10) / 10);
+      w.status = statusFor(w.current);
+      w.battery = Math.max(0, Math.round((w.battery - Math.random() * 0.3) * 10) / 10);
+      w.heartRate = Math.round(75 + (Math.random() - 0.5) * 20 + (w.status !== "SAFE" ? 15 : 0));
+      w.spo2 = Math.round((98 - Math.random() * 2 - (w.status === "DANGER" ? 4 : 0)) * 10) / 10;
+      w.temperature = Math.round((36.6 + (Math.random() - 0.5) * 0.6) * 10) / 10;
+      w.riskScore = riskFor(w);
+      w.lastSync = new Date();
+
+      pushHistory(w.history.ppm, w.current);
+      pushHistory(w.history.hr, w.heartRate);
+      pushHistory(w.history.spo2, w.spo2);
+      pushHistory(w.history.temp, w.temperature);
+      pushHistory(w.history.battery, w.battery);
+      pushHistory(w.history.risk, w.riskScore);
+
+      if (readingTickCount % 3 === 0) {
+        readingsLog.unshift({
+          time: new Date(), worker_id: w.worker_id, worker_name: w.worker_name,
+          exposure: w.current, heartRate: w.heartRate, spo2: w.spo2, temperature: w.temperature, status: w.status
+        });
+        if (readingsLog.length > 200) readingsLog.pop();
+      }
+    }
+
+    w.trend = (w.prev == null || w.current === w.prev) ? "flat" : (w.current > w.prev ? "up" : "down");
+
+    if (w.status === "DANGER") raiseAlert(w, "EXPOSURE", `Exposure at ${w.current} ppm — DANGER`, "DANGER"); else autoResolve(w, "EXPOSURE");
+    if (w.status === "WARNING") raiseAlert(w, "WARNING_EXPOSURE", `Exposure at ${w.current} ppm — WARNING`, "WARNING"); else autoResolve(w, "WARNING_EXPOSURE");
+    if (w.battery < thresholds.lowBattery) raiseAlert(w, "BATTERY", `Battery low at ${w.battery}%`, "BATTERY"); else autoResolve(w, "BATTERY");
+    if (w.sensorStatus === "FAULT") raiseAlert(w, "SENSOR_FAULT", "MQ-136 sensor fault detected", "FAULT"); else autoResolve(w, "SENSOR_FAULT");
+    if (w.deviceStatus === "OFFLINE") raiseAlert(w, "DEVICE_OFFLINE", "ESP32 device disconnected", "FAULT"); else autoResolve(w, "DEVICE_OFFLINE");
+    if (w.heartRate > thresholds.maxHr || w.heartRate < thresholds.minHr) raiseAlert(w, "HEALTH_HR", `Heart rate abnormal at ${w.heartRate} bpm`, "WARNING"); else autoResolve(w, "HEALTH_HR");
+    if (w.spo2 < thresholds.minSpo2) raiseAlert(w, "HEALTH_SPO2", `SpO2 low at ${w.spo2}%`, "DANGER"); else autoResolve(w, "HEALTH_SPO2");
+    if (w.temperature > thresholds.maxTemp) raiseAlert(w, "HEALTH_TEMP", `Temperature elevated at ${w.temperature}°C`, "WARNING"); else autoResolve(w, "HEALTH_TEMP");
+  });
+
+  const online = liveWorkers.filter(w => w.deviceStatus === "ONLINE");
+  const avg = online.length ? online.reduce((s, w) => s + w.current, 0) / online.length : 0;
+  pushHistory(fleetHistory, Math.round(avg * 10) / 10);
+
+  renderActiveView(currentActiveViewName());
+}
+
+function currentActiveViewName() {
+  const el = document.querySelector(".view.active");
+  return el ? el.id.replace("view-", "") : "home";
+}
+
+function needsAttention(w) {
+  return w.status !== "SAFE" || w.battery < thresholds.lowBattery || w.sensorStatus !== "CONNECTED" || w.deviceStatus !== "ONLINE"
+    || w.heartRate > thresholds.maxHr || w.heartRate < thresholds.minHr || w.spo2 < thresholds.minSpo2 || w.temperature > thresholds.maxTemp;
+}
+
+function startMasterLoop() {
+  if (masterInterval) return;
+  tickSimulation();
+  masterInterval = setInterval(tickSimulation, 2500);
+}
+
+function trendArrow(trend) {
+  if (trend === "up") return '<span class="trend up">▲</span>';
+  if (trend === "down") return '<span class="trend down">▼</span>';
+  return '<span class="trend flat">—</span>';
+}
+
+// ===============================================
+// HOME
+// ===============================================
+function renderHome() {
+  const online = liveWorkers.filter(w => w.deviceStatus === "ONLINE").length;
+  const alertCount = liveWorkers.filter(needsAttention).length;
+  const avgRisk = Math.round(liveWorkers.reduce((s, w) => s + w.riskScore, 0) / liveWorkers.length);
+
+  document.getElementById("homeHeroCount").textContent = online;
+  document.getElementById("homeHeroAlert").textContent = alertCount + " ACTIVE ALERT" + (alertCount === 1 ? "" : "S");
+  document.getElementById("homeTotal").textContent = String(liveWorkers.length).padStart(2, "0");
+  document.getElementById("homeOnline").textContent = String(online).padStart(2, "0");
+  document.getElementById("homeAlerts").textContent = String(alertCount).padStart(2, "0");
+  document.getElementById("homeRisk").textContent = avgRisk;
+}
+
+// ===============================================
+// DASHBOARD (all workers)
+// ===============================================
+function renderDashboard() {
+  const alertCount = liveWorkers.filter(needsAttention).length;
+  const online = liveWorkers.filter(w => w.deviceStatus === "ONLINE");
+  const avg = online.length ? online.reduce((s, w) => s + w.current, 0) / online.length : 0;
+  const safeCount = liveWorkers.filter(w => w.status === "SAFE").length;
+
+  document.getElementById("dashWorkers").textContent = String(liveWorkers.length).padStart(2, "0");
+  document.getElementById("dashAlerts").textContent = String(alertCount).padStart(2, "0");
+  document.getElementById("dashAverage").textContent = avg.toFixed(1) + " ppm";
+  document.getElementById("dashCompliance").textContent = Math.round((safeCount / liveWorkers.length) * 100) + "%";
+
+  drawLineChart("dashChart", fleetHistory, "#7dff9b", 10);
+
+  const severity = { DANGER: 0, WARNING: 1, SAFE: 2 };
+  const sorted = [...liveWorkers].sort((a, b) => severity[a.status] - severity[b.status] || b.current - a.current);
+  document.getElementById("dashWorkerGrid").innerHTML = sorted.map(workerCardHtml).join("");
+}
+
+function workerCardHtml(w) {
+  return `
+    <div class="guide-item worker-card" onclick="goToWorkerDetails('${w.worker_id}')">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong>${w.worker_name}</strong>
+        <span class="status ${w.status.toLowerCase()}">${w.status}</span>
+      </div>
+      <p style="margin-top:6px; color:#b4c8ba;">${w.worker_id} — <b style="color:#e9fff2;">${w.current} ppm</b> ${trendArrow(w.trend)}</p>
+      <div class="worker-meta">
+        <span class="pill-mini ${w.battery < thresholds.lowBattery ? 'low' : ''}">🔋 ${w.battery}%</span>
+        <span class="pill-mini ${w.sensorStatus !== 'CONNECTED' ? 'bad' : ''}">Sensor: ${w.sensorStatus}</span>
+        <span class="pill-mini ${w.deviceStatus !== 'ONLINE' ? 'bad' : ''}">Device: ${w.deviceStatus}</span>
+      </div>
+    </div>
+  `;
+}
+
+function goToWorkerDetails(id) {
+  selectedWorkerId = id;
+  showView("worker-details");
+}
+
+// ===============================================
+// WORKER DETAILS
+// ===============================================
+function renderWorkerDetailsList() {
+  const search = document.getElementById("workerDetailsSearch");
+  if (!search.dataset.bound) { search.addEventListener("input", renderWorkerDetailsList); search.dataset.bound = "1"; }
+  const query = search.value.trim().toLowerCase();
+
+  let list = liveWorkers;
+  if (query) list = list.filter(w => w.worker_name.toLowerCase().includes(query) || w.worker_id.toLowerCase().includes(query));
+
+  document.getElementById("workerDetailsList").innerHTML = list.map(w => `
+    <div class="worker-list-row ${w.worker_id === selectedWorkerId ? 'selected' : ''}" onclick="selectWorkerDetail('${w.worker_id}')">
+      <div><div class="wn">${w.worker_name}</div><div class="wid">${w.worker_id} · ${w.zone}</div></div>
+      <span class="status ${w.status.toLowerCase()}">${w.status}</span>
+    </div>
+  `).join("");
+
+  if (!list.find(w => w.worker_id === selectedWorkerId) && list.length) selectedWorkerId = list[0].worker_id;
+  renderWorkerDetailPanel();
+}
+
+function selectWorkerDetail(id) {
+  selectedWorkerId = id;
+  renderWorkerDetailsList();
+}
+
+function renderWorkerDetailPanel() {
+  const w = liveWorkers.find(x => x.worker_id === selectedWorkerId);
+  const panel = document.getElementById("workerDetailPanel");
+  if (!w) { panel.innerHTML = `<p class="empty-note">No worker selected.</p>`; return; }
+
+  panel.innerHTML = `
+    <h2>${w.worker_name} <span style="color:#82988a; font-weight:normal; font-size:14px;">(${w.worker_id})</span></h2>
+    <p style="color:#82988a; font-size:13.5px; margin-top:4px;">${w.zone}</p>
+    <div class="detail-grid">
+      <div><span>EXPOSURE</span><strong>${w.current} ppm ${trendArrow(w.trend)}</strong></div>
+      <div><span>SAFETY STATUS</span><strong><span class="status ${w.status.toLowerCase()}">${w.status}</span></strong></div>
+      <div><span>RISK SCORE</span><strong><span class="risk-badge ${riskLevel(w.riskScore).toLowerCase()}">${riskLevel(w.riskScore)} · ${w.riskScore}</span></strong></div>
+      <div><span>HEART RATE</span><strong>${w.heartRate} bpm</strong></div>
+      <div><span>SPO2</span><strong>${w.spo2}%</strong></div>
+      <div><span>TEMPERATURE</span><strong>${w.temperature}°C</strong></div>
+      <div><span>SENSOR (MQ-136)</span><strong>${w.sensorStatus}</strong></div>
+      <div><span>DEVICE (ESP32)</span><strong>${w.deviceStatus}</strong></div>
+      <div><span>BATTERY</span><strong>${w.battery}%</strong></div>
+      <div><span>LAST SYNC</span><strong>${w.lastSync ? w.lastSync.toLocaleTimeString() : "—"}</strong></div>
+    </div>
+  `;
+}
+
+// ===============================================
+// LIVE MONITORING (single device raw feed)
+// ===============================================
+function populateLiveDeviceSelect() {
+  const select = document.getElementById("liveDeviceSelect");
+  if (select.options.length === liveWorkers.length) return;
+  select.innerHTML = liveWorkers.map(w => `<option value="${w.worker_id}">${w.worker_name} (${w.worker_id})</option>`).join("");
+  select.value = selectedWorkerId;
+  if (!select.dataset.bound) {
+    select.addEventListener("change", () => { selectedWorkerId = select.value; renderLive(); });
+    select.dataset.bound = "1";
+  }
+}
+
+function renderLive() {
+  populateLiveDeviceSelect();
+  const w = liveWorkers.find(x => x.worker_id === selectedWorkerId) || liveWorkers[0];
+  document.getElementById("liveDeviceSelect").value = w.worker_id;
+
+  document.getElementById("liveDeviceMeta").textContent =
+    `ESP32-C3 · Device ID ESP32-${w.worker_id} · Sensor: ${w.sensorStatus} · Device: ${w.deviceStatus}`;
+
+  updateDigital("digitalPpm", w.current, w.status === "DANGER" ? "bad" : w.status === "WARNING" ? "warn" : "ok");
+  updateDigital("digitalHr", w.heartRate, (w.heartRate > thresholds.maxHr || w.heartRate < thresholds.minHr) ? "bad" : "ok");
+  updateDigital("digitalSpo2", w.spo2, w.spo2 < thresholds.minSpo2 ? "bad" : "ok");
+  updateDigital("digitalTemp", w.temperature, w.temperature > thresholds.maxTemp ? "warn" : "ok");
+
+  document.getElementById("liveRawReadout").innerHTML = `
+    <div><span>BATTERY</span><strong>${w.battery}%</strong></div>
+    <div><span>LAST SYNC</span><strong>${w.lastSync ? w.lastSync.toLocaleTimeString() : "—"}</strong></div>
+    <div><span>SENSOR (MQ-136)</span><strong>${w.sensorStatus}</strong></div>
+    <div><span>DEVICE (ESP32)</span><strong>${w.deviceStatus}</strong></div>
+  `;
+}
+
+function updateDigital(cardId, value, state) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  card.className = "digital-card " + state;
+  card.querySelector(".d-value").textContent = value;
+}
+
+// ===============================================
+// ALERTS PAGE
+// ===============================================
+function setAlertTab(tab) {
+  alertTab = tab;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  renderAlertsPage();
+}
+
+function renderAlertsPage() {
+  const list = document.getElementById("alertsList");
+  let items = alertLog;
+  if (alertTab !== "ALL") items = items.filter(a => a.status === alertTab);
+
+  if (items.length === 0) {
+    list.innerHTML = `<p class="empty-good">✓ Nothing here right now.</p>`;
+    return;
+  }
+
+  list.innerHTML = items.map(a => `
+    <div class="attention-row">
+      <div class="a-info">
+        <strong>${a.worker_name} (${a.worker_id})</strong>
+        <span>${a.message} · ${a.type.replace("_", " ")}</span>
+      </div>
+      <div class="a-actions">
+        ${a.status === "ACTIVE" ? `<button class="mini-btn" onclick="acknowledgeAlert(${a.id})">Acknowledge</button>` : ""}
+        ${a.status !== "RESOLVED" ? `<button class="mini-btn resolve" onclick="resolveAlert(${a.id})">Resolve</button>` : `<span class="log-status resolved">RESOLVED</span>`}
+      </div>
+    </div>
+  `).join("");
+}
+
+// ===============================================
+// HISTORY
+// ===============================================
+function renderReadingsTable() {
+  const table = document.getElementById("readingsTable");
+  if (readingsLog.length === 0) { table.innerHTML = `<tr><td colspan="7">No sensor readings logged yet.</td></tr>`; return; }
+  table.innerHTML = readingsLog.slice(0, 40).map(r => `
+    <tr>
+      <td>${r.time.toLocaleTimeString()}</td>
+      <td>${r.worker_name} (${r.worker_id})</td>
+      <td>${r.exposure} ppm</td>
+      <td>${r.heartRate} bpm</td>
+      <td>${r.spo2}%</td>
+      <td>${r.temperature}°C</td>
+      <td><span class="status ${r.status.toLowerCase()}">${r.status}</span></td>
+    </tr>
+  `).join("");
+}
+
+function renderAlertLogTable() {
+  const table = document.getElementById("alertLogTable");
+  if (alertLog.length === 0) { table.innerHTML = `<tr><td colspan="6">No alerts recorded yet.</td></tr>`; return; }
+  const fmt = d => d ? d.toLocaleTimeString() : "—";
+  table.innerHTML = alertLog.slice(0, 40).map(a => `
+    <tr>
+      <td>${a.worker_name} (${a.worker_id})</td>
+      <td>${a.type.replace("_", " ")}</td>
+      <td>${fmt(a.created)}</td>
+      <td>${fmt(a.acknowledgedAt)}</td>
+      <td>${fmt(a.resolvedAt)}</td>
+      <td><span class="log-status ${a.status.toLowerCase()}">${a.status}</span></td>
+    </tr>
+  `).join("");
+}
+
+function exportReadingsCsv() {
+  if (readingsLog.length === 0) { alert("No readings to export yet."); return; }
+  const header = "Time,Worker ID,Worker Name,Exposure(ppm),HeartRate(bpm),SpO2(%),Temp(C),Status\n";
+  const rows = readingsLog.map(r =>
+    `"${r.time.toLocaleString()}","${r.worker_id}","${r.worker_name}",${r.exposure},${r.heartRate},${r.spo2},${r.temperature},${r.status}`
+  ).join("\n");
+  downloadCsv(header + rows, "sensaband-readings.csv");
+}
+
+function downloadCsv(content, filename) {
+  const blob = new Blob([content], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===============================================
+// ANALYTICS
+// ===============================================
+function populateAnalyticsSelect() {
+  const select = document.getElementById("analyticsWorkerSelect");
+  if (select.options.length === liveWorkers.length) return;
+  select.innerHTML = liveWorkers.map(w => `<option value="${w.worker_id}">${w.worker_name} (${w.worker_id})</option>`).join("");
+  select.value = selectedWorkerId;
+  if (!select.dataset.bound) {
+    select.addEventListener("change", () => { selectedWorkerId = select.value; renderAnalytics(); });
+    select.dataset.bound = "1";
+  }
+}
+
+function renderAnalytics() {
+  populateAnalyticsSelect();
+  const w = liveWorkers.find(x => x.worker_id === selectedWorkerId) || liveWorkers[0];
+  document.getElementById("analyticsWorkerSelect").value = w.worker_id;
+
+  const badge = document.getElementById("analyticsRiskBadge");
+  badge.textContent = `${riskLevel(w.riskScore)} · ${w.riskScore}`;
+  badge.className = "risk-badge " + riskLevel(w.riskScore).toLowerCase();
+
+  drawLineChart("chartPpm", w.history.ppm, "#7dff9b", thresholds.dangerPpm);
+  drawLineChart("chartHr", w.history.hr, "#ff9d84", 140);
+  drawLineChart("chartSpo2", w.history.spo2, "#6dd3ff", 100);
+  drawLineChart("chartTemp", w.history.temp, "#f5c76a", 40);
+  drawLineChart("chartBattery", w.history.battery, "#c98aff", 100);
+  drawLineChart("chartRisk", w.history.risk, "#ff6d6d", 100);
+}
+
+// ===============================================
+// GENERIC LINE CHART
+// ===============================================
+function drawLineChart(canvasId, values, color, maxOverride) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width, height = canvas.height;
+  ctx.clearRect(0, 0, width, height);
+
+  if (!values || values.length < 2) {
+    ctx.fillStyle = "#5c6d64"; ctx.font = "13px Arial";
+    ctx.fillText("Collecting data...", 14, height / 2);
+    return;
+  }
+
+  const padding = 28;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+  const maxValue = Math.max(...values, maxOverride || 1);
+
+  ctx.strokeStyle = "#19352a";
+  ctx.beginPath();
+  ctx.moveTo(padding, padding); ctx.lineTo(padding, height - padding); ctx.lineTo(width - padding, height - padding);
+  ctx.stroke();
+
+  ctx.strokeStyle = color; ctx.fillStyle = color;
+  ctx.beginPath();
+  values.forEach((v, i) => {
+    const x = padding + (i / Math.max(values.length - 1, 1)) * chartWidth;
+    const y = height - padding - (v / maxValue) * chartHeight;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  values.forEach((v, i) => {
+    const x = padding + (i / Math.max(values.length - 1, 1)) * chartWidth;
+    const y = height - padding - (v / maxValue) * chartHeight;
+    ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill();
+  });
+}
+
+// ===============================================
+// REPORTS
+// ===============================================
+let lastReport = null;
+
+function generateReport() {
+  const period = document.getElementById("reportPeriod").value;
+  const totalReadings = readingsLog.length;
+  const avgExposure = totalReadings ? (readingsLog.reduce((s, r) => s + r.exposure, 0) / totalReadings) : 0;
+  const safeCount = readingsLog.filter(r => r.status === "SAFE").length;
+  const compliance = totalReadings ? Math.round((safeCount / totalReadings) * 100) : 100;
+  const dangerAlerts = alertLog.filter(a => a.type === "EXPOSURE").length;
+  const warningAlerts = alertLog.filter(a => a.type === "WARNING_EXPOSURE").length;
+  const healthAlerts = alertLog.filter(a => a.type.startsWith("HEALTH_")).length;
+  const deviceAlerts = alertLog.filter(a => a.type === "DEVICE_OFFLINE" || a.type === "SENSOR_FAULT").length;
+  const batteryAlerts = alertLog.filter(a => a.type === "BATTERY").length;
+
+  lastReport = { period, totalReadings, avgExposure, compliance, dangerAlerts, warningAlerts, healthAlerts, deviceAlerts, batteryAlerts, generatedAt: new Date() };
+
+  document.getElementById("reportOutput").classList.remove("hidden");
+  document.getElementById("reportActions").classList.remove("hidden");
+  document.getElementById("reportOutput").innerHTML = `
+    <div><b>${period.toUpperCase()} REPORT</b> — generated ${lastReport.generatedAt.toLocaleString()}</div>
+    <div>Total sensor readings logged: <b>${totalReadings}</b></div>
+    <div>Average H₂S exposure: <b>${avgExposure.toFixed(1)} ppm</b></div>
+    <div>Compliance (readings in SAFE range): <b>${compliance}%</b></div>
+    <div>Danger-level exposure alerts: <b>${dangerAlerts}</b></div>
+    <div>Warning-level exposure alerts: <b>${warningAlerts}</b></div>
+    <div>Health alerts (HR/SpO2/Temp): <b>${healthAlerts}</b></div>
+    <div>Device/sensor fault alerts: <b>${deviceAlerts}</b></div>
+    <div>Low battery alerts: <b>${batteryAlerts}</b></div>
+    <div>Workers tracked: <b>${liveWorkers.length}</b></div>
+  `;
+}
+
+function exportReportCsv() {
+  if (!lastReport) { alert("Generate a report first."); return; }
+  const r = lastReport;
+  const content = "Metric,Value\n" +
+    `Period,${r.period}\n` +
+    `Generated At,${r.generatedAt.toLocaleString()}\n` +
+    `Total Readings,${r.totalReadings}\n` +
+    `Average Exposure (ppm),${r.avgExposure.toFixed(1)}\n` +
+    `Compliance (%),${r.compliance}\n` +
+    `Danger Alerts,${r.dangerAlerts}\n` +
+    `Warning Alerts,${r.warningAlerts}\n` +
+    `Health Alerts,${r.healthAlerts}\n` +
+    `Device/Sensor Alerts,${r.deviceAlerts}\n` +
+    `Battery Alerts,${r.batteryAlerts}\n`;
+  downloadCsv(content, `sensaband-${r.period}-report.csv`);
+}
+
+// ===============================================
+// SETTINGS
+// ===============================================
+function renderSettings() {
+  document.getElementById("thWarnPpm").value = thresholds.warnPpm;
+  document.getElementById("thDangerPpm").value = thresholds.dangerPpm;
+  document.getElementById("thBattery").value = thresholds.lowBattery;
+  document.getElementById("thMaxHr").value = thresholds.maxHr;
+  document.getElementById("thMinHr").value = thresholds.minHr;
+  document.getElementById("thMinSpo2").value = thresholds.minSpo2;
+  document.getElementById("thMaxTemp").value = thresholds.maxTemp;
+
+  document.getElementById("zoneList").innerHTML = zones.map((z, i) => `
+    <div class="zone-row"><span>${z}</span><button class="remove-btn" onclick="removeZone(${i})">Remove</button></div>
+  `).join("");
+
+  document.getElementById("workerManageList").innerHTML = liveWorkers.map(w => `
+    <div class="zone-row"><span>${w.worker_name} (${w.worker_id}) — ${w.zone}</span><button class="remove-btn" onclick="removeWorker('${w.worker_id}')">Remove</button></div>
+  `).join("");
+
+  document.getElementById("deviceList").innerHTML = liveWorkers.map(w => `
+    <div class="device-row">
+      <span>ESP32-${w.worker_id} (${w.worker_name})</span>
+      <span class="pill-mini ${w.deviceStatus !== 'ONLINE' ? 'bad' : ''}">${w.deviceStatus}</span>
+    </div>
+  `).join("");
+
+  document.getElementById("notifyEmail").checked = notifyPrefs.email;
+  document.getElementById("notifySms").checked = notifyPrefs.sms;
+  document.getElementById("notifyDanger").checked = notifyPrefs.onDanger;
+  document.getElementById("notifyWarning").checked = notifyPrefs.onWarning;
+  document.getElementById("notifyBattery").checked = notifyPrefs.onBattery;
+  document.getElementById("notifyFault").checked = notifyPrefs.onFault;
+
+  document.getElementById("notificationsLogList").innerHTML = notificationsLog.length
+    ? notificationsLog.slice(0, 10).map(n => `
+        <div class="zone-row"><span>${n.time.toLocaleTimeString()} — ${n.worker}: ${n.message}</span><span style="color:#82988a; font-size:12px;">${n.channels}</span></div>
+      `).join("")
+    : `<p class="empty-note">No notifications sent yet.</p>`;
+}
+
+function saveThresholds() {
+  thresholds.warnPpm = parseFloat(document.getElementById("thWarnPpm").value) || thresholds.warnPpm;
+  thresholds.dangerPpm = parseFloat(document.getElementById("thDangerPpm").value) || thresholds.dangerPpm;
+  thresholds.lowBattery = parseFloat(document.getElementById("thBattery").value) || thresholds.lowBattery;
+  thresholds.maxHr = parseFloat(document.getElementById("thMaxHr").value) || thresholds.maxHr;
+  thresholds.minHr = parseFloat(document.getElementById("thMinHr").value) || thresholds.minHr;
+  thresholds.minSpo2 = parseFloat(document.getElementById("thMinSpo2").value) || thresholds.minSpo2;
+  thresholds.maxTemp = parseFloat(document.getElementById("thMaxTemp").value) || thresholds.maxTemp;
+}
+
+function addZone() {
+  const input = document.getElementById("newZoneInput");
+  const val = input.value.trim();
+  if (!val) return;
+  zones.push(val);
+  input.value = "";
+  renderSettings();
+}
+function removeZone(index) { zones.splice(index, 1); renderSettings(); }
+
+function addWorker() {
+  const id = document.getElementById("newWorkerId").value.trim();
+  const name = document.getElementById("newWorkerName").value.trim();
+  if (!id || !name) { alert("Enter both a Worker ID and name."); return; }
+  if (liveWorkers.find(w => w.worker_id === id)) { alert("That Worker ID already exists."); return; }
+  liveWorkers.push(mkWorker(id, name, zones[0] || "Unassigned", 2, 100, "CONNECTED"));
+  document.getElementById("newWorkerId").value = "";
+  document.getElementById("newWorkerName").value = "";
+  renderSettings();
+}
+function removeWorker(id) {
+  const idx = liveWorkers.findIndex(w => w.worker_id === id);
+  if (idx > -1) liveWorkers.splice(idx, 1);
+  renderSettings();
+}
+
+function saveNotifyPrefs() {
+  notifyPrefs.email = document.getElementById("notifyEmail").checked;
+  notifyPrefs.sms = document.getElementById("notifySms").checked;
+  notifyPrefs.onDanger = document.getElementById("notifyDanger").checked;
+  notifyPrefs.onWarning = document.getElementById("notifyWarning").checked;
+  notifyPrefs.onBattery = document.getElementById("notifyBattery").checked;
+  notifyPrefs.onFault = document.getElementById("notifyFault").checked;
+}
+</script>
+
+</body>
+</html>
