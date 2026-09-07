@@ -22,7 +22,9 @@ sys.path.append(BASE_DIR)
 from backend.database import (
     create_database,
     insert_scan,
-    get_history
+    get_history,
+    insert_telemetry,
+    get_telemetry
 )
 
 
@@ -227,6 +229,48 @@ def history():
     data = get_history()
 
     return jsonify(data)
+
+
+# ------------------------------------------------
+# ESP32 TELEMETRY API
+# ------------------------------------------------
+
+@app.route(
+    "/api/telemetry",
+    methods=["POST"]
+)
+def telemetry():
+
+    data = request.get_json(silent=True) or {}
+    required = ("device_id", "gas_raw", "exposure", "status")
+
+    if any(field not in data for field in required):
+        return jsonify({
+            "success": False,
+            "message": "device_id, gas_raw, exposure, and status are required"
+        }), 400
+
+    try:
+        insert_telemetry(
+            str(data["device_id"]),
+            int(data["gas_raw"]),
+            float(data["exposure"]),
+            int(data["battery_raw"]) if data.get("battery_raw") is not None else None,
+            str(data["status"])
+        )
+    except (TypeError, ValueError) as error:
+        return jsonify({"success": False, "message": str(error)}), 400
+
+    return jsonify({"success": True, "message": "Telemetry received"})
+
+
+@app.route(
+    "/api/telemetry",
+    methods=["GET"]
+)
+def telemetry_history():
+
+    return jsonify(get_telemetry())
 
 
 # ------------------------------------------------

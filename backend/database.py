@@ -70,9 +70,53 @@ def create_database():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS telemetry (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_id TEXT NOT NULL,
+            gas_raw INTEGER NOT NULL,
+            exposure REAL NOT NULL,
+            battery_raw INTEGER,
+            status TEXT NOT NULL,
+            received_at TEXT NOT NULL
+        )
+    """)
+
     connection.commit()
 
     connection.close()
+
+
+def insert_telemetry(device_id, gas_raw, exposure, battery_raw, status):
+
+    connection = get_connection()
+
+    connection.execute("""
+        INSERT INTO telemetry
+        (device_id, gas_raw, exposure, battery_raw, status, received_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        device_id,
+        gas_raw,
+        exposure,
+        battery_raw,
+        status,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+
+    connection.commit()
+    connection.close()
+
+
+def get_telemetry():
+
+    connection = get_connection()
+    rows = connection.execute("""
+        SELECT * FROM telemetry ORDER BY id DESC LIMIT 100
+    """).fetchall()
+    connection.close()
+
+    return [dict(row) for row in rows]
 
 
 def insert_scan(
